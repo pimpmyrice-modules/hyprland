@@ -1,9 +1,9 @@
 general {
     gaps_in = {{gaps.inner}}
-    gaps_out = {{gaps.outer}}
+    gaps_out = 0,{{gaps.outer}},{{gaps.outer}},{{gaps.outer}} 
     border_size = {{border.width}}
-    col.active_border = rgb({{border.active.nohash}})
-    col.inactive_border = rgb({{border.inactive.nohash}})
+    col.active_border = rgba({{border.active.nohasha}})
+    col.inactive_border = rgba({{border.inactive.nohasha}})
 }
 
 decoration {
@@ -21,9 +21,10 @@ decoration {
     }
     shadow {
         enabled = {{"true" if shadow.enabled else "false"}}
-        range = {{shadow.spread + shadow.blur}}
+        range = {{shadow.spread}}
         offset = {{shadow.offset}} {{shadow.offset}}
-        render_power = 3
+        render_power = {{ ((4 - (shadow.blur / 5)) | int) if shadow.blur > 0 else 4 }}
+        sharp = {{ "true" if shadow.blur == 0 else "false" }}
         color = rgba({{shadow.color}}, {{shadow.opacity}})
     }
 }
@@ -45,13 +46,14 @@ animations {
 
 plugin {
     hyprbars {
-        bar_height = {{font.normal.size + padding.y if titlebar.enabled else 0 }}
+        bar_height = {{[padding.y, 14]|max + font.normal.size if titlebar.enabled else 0 }}
         bar_text_font = {{font.normal.family}}
         bar_text_size = {{font.normal.size-3}}
         bar_color = rgb({{border.inactive.nohash}})
         col.text = rgb({{normal.fg.nohash}})
 
-        bar_padding = {{border.width + (border.radius * 0.67) | int}}
+        #bar_padding = {{border.width + (border.radius * 0.67) | int}}
+        bar_padding = 0
         bar_button_padding = 10
 
         bar_part_of_window = true
@@ -62,23 +64,32 @@ plugin {
         bar_text_align = center
         bar_buttons_alignment = right
 
-        hyprbars-button = rgb({{accent.bg.nohash}}), {{font.normal.size + 5}}, , hyprctl dispatch killactive
-        hyprbars-button = rgb({{secondary.bg.alt.nohash}}), {{font.normal.size + 5}}, , hyprctl dispatch fullscreen 0
+        hyprbars-button = rgb({{destructive.bg.nohash}}), {{font.normal.size + 5}}, , hyprctl dispatch killactive
+        hyprbars-button = rgb({{secondary.bg.adjusted(sat="-5", val="-5").nohash}}), {{font.normal.size + 5}}, , hyprctl dispatch fullscreen 0
         hyprbars-button = rgb({{secondary.bg.nohash}}), {{font.normal.size + 5}}, , hyprctl dispatch togglefloating
     }
 
+
     borders-plus-plus {
-        add_borders = {{ 1 if border_2.enabled else 0 }} # 0 - 9
-
+        {% if borders_plus | length == 0 %}
+        add_borders = 1
+        border_size_1 = 0
+        {% else %}
+        add_borders = {{ borders_plus | length }} # 0 - 9
+        {% endif %}
         
-        # you can add up to 9 borders
-        col.border_1 = rgb({{border_2.color.nohash}})
+        {% for border in borders_plus.values() %}
+            # you can add up to 9 borders
+            col.border_{{ loop.index }} = rgb({{ border.color.nohash }})
+            
+            # -1 means "default" as in the one defined in general:border_size
+            border_size_{{ loop.index }} = {{ border.width }}
 
-        # -1 means "default" as in the one defined in general:border_size
-        border_size_1 = {{border_2.width}}
-
-        natural_rounding = no
+        {% endfor %}
+        
     }
+
+
 }
 
 windowrulev2 = plugin:hyprbars:bar_color rgb({{border.active.nohash}}), focus:1
@@ -91,9 +102,9 @@ windowrulev2 = bordercolor rgb(2b3229), onworkspace:w[t1]
 
 
 {% if blur_bg %}
-layerrule = blur, waybar
-layerrule = blur, rofi
+# layerrule = blur, waybar
+# layerrule = blur, rofi
 {% endif %}
 
 
-exec-once=hyprctl setcursor {{cursor.name}} {{cursor.size}}
+exec=hyprctl setcursor "{{cursor.name}}" {{cursor.size}}

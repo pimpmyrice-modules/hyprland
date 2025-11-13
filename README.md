@@ -5,7 +5,7 @@
 ## Set up
 
 ```bash
-pimp clone module pimp://hyprland
+pimp clone module hyprland
 ```
 
 In your `hyprland.conf` delete any appearance settings, then add this line:
